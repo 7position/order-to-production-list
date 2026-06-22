@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>受注CSV → 製作リスト変換ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --paper:#F4F6F1;
+    --surface:#FFFFFF;
+    --ink:#1C2B3A;
+    --ink-soft:#5B6B72;
+    --line:#DCE3DA;
+    --line-strong:#C3CDC0;
+    --accent:#C97A3D;
+    --accent-deep:#A85F2A;
+    --accent-soft:#F1DEC9;
+    --success:#4F7A57;
+    --success-bg:#E8F0E6;
+    --danger:#B3503F;
+    --danger-bg:#F6E6E1;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(28,43,58,0.04), 0 8px 24px rgba(28,43,58,0.05);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .bg-grid{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:48px 48px;
+    opacity:0.35;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:56px 24px 96px;
+  }
+
+  header.intro{
+    margin-bottom:40px;
+  }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.06em;
+    color:var(--accent-deep);
+    background:var(--accent-soft);
+    border-radius:999px;
+    padding:5px 12px;
+    margin-bottom:18px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(28px, 4vw, 38px);
+    line-height:1.25;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h1 em{ font-style:italic; color:var(--accent-deep); font-weight:500; }
+
+  .lede{
+    font-size:16px;
+    color:var(--ink-soft);
+    max-width:60ch;
+    margin:0 0 18px;
+  }
+
+  .privacy-note{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:13.5px;
+    color:var(--success);
+    background:var(--success-bg);
+    border-radius:8px;
+    padding:10px 14px;
+    max-width:fit-content;
+  }
+  .privacy-note svg{ flex-shrink:0; margin-top:1px; }
+
+  .scope-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:14px;
+  }
+
+  /* --- signature diagram --- */
+  .diagram{
+    display:block;
+    margin:36px 0 8px;
+    width:100%;
+    max-width:420px;
+  }
+
+  /* --- dropzone --- */
+  .dropzone{
+    position:relative;
+    border:1.5px dashed var(--line-strong);
+    border-radius:var(--radius);
+    background:var(--surface);
+    padding:40px 28px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--accent);
+    background:#FFFDFB;
+  }
+  .dropzone input[type=file]{
+    position:absolute; inset:0; opacity:0; cursor:pointer;
+  }
+  .dropzone .dz-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:19px;
+    margin:14px 0 6px;
+  }
+  .dropzone .dz-sub{
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .dropzone .dz-icon{
+    width:34px; height:34px; color:var(--accent);
+  }
+
+  .controls-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+
+  .enc-toggle{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .enc-toggle select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    border:1px solid var(--line-strong);
+    border-radius:6px;
+    background:var(--surface);
+    padding:5px 8px;
+    color:var(--ink);
+  }
+
+  .filename-chip{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+
+  /* --- status / error --- */
+  .banner{
+    margin-top:20px;
+    border-radius:8px;
+    padding:13px 16px;
+    font-size:14px;
+    display:none;
+  }
+  .banner.show{ display:block; }
+  .banner.error{ background:var(--danger-bg); color:var(--danger); }
+  .banner.error .err-detail{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; opacity:0.85; margin-top:4px; }
+
+  /* --- results --- */
+  .results{
+    margin-top:40px;
+    display:none;
+  }
+  .results.show{
+    display:block;
+    animation: fadeUp .35s ease both;
+  }
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .summary-row{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+  }
+  .stat-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 18px;
+    min-width:130px;
+  }
+  .stat-card .num{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:26px;
+    color:var(--accent-deep);
+    line-height:1;
+  }
+  .stat-card .label{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  .option-tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:22px;
+  }
+  .option-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    background:var(--accent-soft);
+    color:var(--accent-deep);
+    border-radius:5px;
+    padding:3px 8px;
+  }
+
+  .table-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .table-toolbar h2{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0;
+  }
+
+  .btn{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    border:none;
+    border-radius:7px;
+    padding:10px 18px;
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+  }
+  .btn-primary{ background:var(--accent); color:#fff; }
+  .btn-primary:hover{ background:var(--accent-deep); }
+  .btn-primary:active{ transform:scale(0.98); }
+  .btn-primary:focus-visible, .dropzone:focus-within, select:focus-visible{
+    outline:2px solid var(--accent-deep);
+    outline-offset:2px;
+  }
+
+  .table-scroll{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:auto;
+    max-height:520px;
+    background:var(--surface);
+  }
+  table{
+    border-collapse:collapse;
+    width:100%;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    white-space:nowrap;
+  }
+  thead th{
+    position:sticky; top:0;
+    background:#FBF9F5;
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line-strong);
+    color:var(--ink);
+    font-weight:600;
+  }
+  tbody td{
+    padding:8px 12px;
+    border-bottom:1px solid var(--line);
+    color:var(--ink-soft);
+  }
+  tbody tr:hover td{ background:#FAFAF7; color:var(--ink); }
+  tbody td.base-col{ color:var(--ink); }
+  tbody td.opt-col:empty::after{ content:'—'; color:var(--line-strong); }
+
+  footer{
+    margin-top:64px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    border-top:1px solid var(--line);
+    padding-top:18px;
+  }
+
+  /* --- usage / paywall --- */
+  .usage-indicator{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .usage-indicator.unlocked{ color:var(--success); }
+
+  .paywall{
+    display:none;
+    margin-top:16px;
+    border:1px solid var(--accent-soft);
+    background:#FFFBF6;
+    border-radius:var(--radius);
+    padding:22px 24px;
+  }
+  .paywall.show{ display:block; animation: fadeUp .3s ease both; }
+  .paywall h3{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    font-weight:600;
+    margin:0 0 8px;
+  }
+  .paywall p{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    max-width:56ch;
+  }
+  .paywall .paywall-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .btn-stripe{
+    background:#635BFF;
+    color:#fff;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .btn-stripe:hover{ background:#4F47E0; }
+
+  .unlock-row{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .unlock-row input{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    border:1px solid var(--line-strong);
+    border-radius:6px;
+    padding:8px 10px;
+    background:#fff;
+    color:var(--ink);
+    min-width:200px;
+  }
+  .btn-secondary{
+    background:var(--surface);
+    color:var(--ink);
+    border:1px solid var(--line-strong);
+  }
+  .btn-secondary:hover{ background:#F2F0EA; }
+  .unlock-msg{
+    font-size:12.5px;
+    margin-top:8px;
+    display:none;
+  }
+  .unlock-msg.show{ display:block; }
+  .unlock-msg.ok{ color:var(--success); }
+  .unlock-msg.err{ color:var(--danger); }
+
+  @media (max-width:600px){
+    .wrap{ padding:36px 16px 72px; }
+    .dropzone{ padding:28px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<div class="wrap">
+
+  <header class="intro">
+    <span class="eyebrow"><span class="dot"></span>BASE 受注CSV対応</span>
+    <h1>注文を、<em>つくる順番</em>に並べ直す。</h1>
+    <p class="lede">BASEの受注CSVは1注文が複数行（商品＋オプション行）に分かれています。これを1注文アイテム1行にまとめ、オプションを列として並べ直し、そのまま製作リストとして使える形にします。</p>
+    <div class="privacy-note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>アップロードしたCSVはこのブラウザの中だけで処理されます。サーバーには送信されません。</span>
+    </div>
+  </header>
+
+  <!-- signature diagram: rows merging into one row with columns -->
+  <svg class="diagram" viewBox="0 0 420 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g stroke="#C3CDC0" stroke-width="1.4">
+      <rect x="0" y="6"  width="118" height="16" rx="3" fill="#FFFFFF"/>
+      <rect x="0" y="30" width="118" height="16" rx="3" fill="#FFFFFF"/>
+      <rect x="0" y="54" width="118" height="16" rx="3" fill="#FFFFFF"/>
+      <rect x="0" y="78" width="118" height="16" rx="3" fill="#FFFFFF"/>
+    </g>
+    <g fill="#5B6B72" font-family="IBM Plex Mono, monospace" font-size="9">
+      <text x="8" y="17">商品名</text>
+      <text x="8" y="41">商品オプション「文字入力」</text>
+      <text x="8" y="65">商品オプション「カラー」</text>
+      <text x="8" y="89">商品オプション「蓄光」</text>
+    </g>
+    <g stroke="#C97A3D" stroke-width="1.4" fill="none" stroke-linecap="round">
+      <path d="M120 14 C 170 14, 170 50, 230 50"/>
+      <path d="M120 38 C 170 38, 170 50, 230 50"/>
+      <path d="M120 62 C 170 62, 170 50, 230 50"/>
+      <path d="M120 86 C 170 86, 170 50, 230 50"/>
+    </g>
+    <g>
+      <rect x="232" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
+      <rect x="294" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
+      <rect x="356" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
+    </g>
+    <g fill="#A85F2A" font-family="IBM Plex Mono, monospace" font-size="8.5" text-anchor="middle">
+      <text x="261" y="53">文字入力</text>
+      <text x="323" y="53">カラー</text>
+      <text x="385" y="53">蓄光</text>
+    </g>
+  </svg>
+
+  <div class="dropzone" id="dropzone" tabindex="0">
+    <input type="file" id="fileInput" accept=".csv" aria-label="BASE受注CSVをアップロード">
+    <svg class="dz-icon" viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <div class="dz-title">受注CSVをドロップ、またはクリックして選択</div>
+    <div class="dz-sub" id="dzSub">BASEの管理画面からダウンロードした受注CSV（.csv）に対応しています</div>
+  </div>
+
+  <div class="controls-row">
+    <div class="enc-toggle">
+      <span>文字コード:</span>
+      <select id="encSelect">
+        <option value="shift_jis" selected>Shift-JIS（BASEの標準）</option>
+        <option value="utf-8">UTF-8</option>
+      </select>
+      <span style="color:var(--ink-soft)">※文字が崩れて表示される場合に切り替えてください</span>
+    </div>
+    <span class="filename-chip" id="filenameChip"></span>
+  </div>
+
+  <div class="banner error" id="errorBanner"></div>
+
+  <div class="results" id="results">
+    <div class="summary-row">
+      <div class="stat-card">
+        <div class="num" id="statOrders">0</div>
+        <div class="label">読み込んだ注文数</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statItems">0</div>
+        <div class="label">製作アイテム数</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="statOptions">0</div>
+        <div class="label">検出されたオプション項目</div>
+      </div>
+    </div>
+
+    <div class="option-tags" id="optionTags"></div>
+
+    <div class="table-toolbar">
+      <h2>製作リスト プレビュー</h2>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="usage-indicator" id="usageIndicator"></span>
+        <button class="btn btn-primary" id="downloadBtn">CSVをダウンロード</button>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="resultTable">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="paywall" id="paywall">
+      <h3>無料分はここまでです</h3>
+      <p>初回の変換は無料でお試しいただけます。2回目以降のダウンロードには、少額の利用料をいただいています（プレビューはこのあとも何度でも無料でご覧いただけます）。</p>
+      <div class="paywall-actions">
+        <a class="btn btn-stripe" id="stripeLink" href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK" target="_blank" rel="noopener">
+          Stripeで購入する（¥200）
+        </a>
+      </div>
+      <div class="unlock-row">
+        <input type="text" id="unlockInput" placeholder="購入後にお届けする解除コードを入力" aria-label="解除コード">
+        <button class="btn btn-secondary" id="unlockBtn">解除する</button>
+      </div>
+      <div class="unlock-msg" id="unlockMsg"></div>
+    </div>
+  </div>
+
+  <footer>
+    対応プラットフォーム: BASE（β）。STORES・minne等は今後対応予定です。<br>
+    列名はBASEが出力したオプション名をそのまま使用しています（独自の項目名に変更したい場合は、ダウンロード後のCSVを編集してください）。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const encSelect = document.getElementById('encSelect');
+  const errorBanner = document.getElementById('errorBanner');
+  const results = document.getElementById('results');
+  const filenameChip = document.getElementById('filenameChip');
+  const dzSub = document.getElementById('dzSub');
+
+  let lastArrayBuffer = null;
+  let lastResultRows = null;
+  let lastFieldnames = null;
+
+  const BASE_FIELDS = ['注文ID','注文日時','氏(配送先)','名(配送先)','商品名','数量','発送状況'];
+  const OPTION_PATTERN = /^商品オプション「(.+)」$/;
+
+  // ===== 課金ゲートの設定 =====
+  // 無料で許可するダウンロード回数（このブラウザ・このサイト単位）
+  const FREE_USES = 1;
+  // Stripeでの決済完了後にお客様へお伝えする解除コード。
+  // 運用時はご自身で決めた文字列に変更してください（Stripeの決済完了メッセージ等に記載）。
+  const UNLOCK_CODE = 'REPLACE_WITH_YOUR_CODE';
+  const LS_USES_KEY = 'oplUses_v1';
+  const LS_UNLOCK_KEY = 'oplUnlocked_v1';
+
+  function getUses(){ return parseInt(localStorage.getItem(LS_USES_KEY) || '0', 10); }
+  function incrementUses(){ localStorage.setItem(LS_USES_KEY, String(getUses() + 1)); }
+  function isUnlocked(){ return localStorage.getItem(LS_UNLOCK_KEY) === '1'; }
+  function setUnlocked(){ localStorage.setItem(LS_UNLOCK_KEY, '1'); }
+
+  function updateUsageIndicator(){
+    const el = document.getElementById('usageIndicator');
+    if (!el) return;
+    if (isUnlocked()){
+      el.textContent = '解除済み（無制限）';
+      el.classList.add('unlocked');
+    } else {
+      const remaining = Math.max(0, FREE_USES - getUses());
+      el.textContent = '無料ダウンロード: 残り' + remaining + '回';
+      el.classList.remove('unlocked');
+    }
+  }
+
+  function showError(msg, detail){
+    errorBanner.innerHTML = '<div>' + msg + '</div>' + (detail ? '<div class="err-detail">' + detail + '</div>' : '');
+    errorBanner.classList.add('show');
+    results.classList.remove('show');
+  }
+  function clearError(){
+    errorBanner.classList.remove('show');
+    errorBanner.innerHTML = '';
+  }
+
+  ['dragover','dragenter'].forEach(evt => {
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','dragend','drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => { dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  dropzone.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+  });
+  fileInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) handleFile(f);
+  });
+  encSelect.addEventListener('change', () => {
+    if (lastArrayBuffer) processBuffer(lastArrayBuffer);
+  });
+
+  function handleFile(file){
+    filenameChip.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      lastArrayBuffer = e.target.result;
+      processBuffer(lastArrayBuffer);
+    };
+    reader.onerror = function(){
+      showError('ファイルの読み込みに失敗しました。', String(reader.error));
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processBuffer(buffer){
+    clearError();
+    let text;
+    try {
+      const decoder = new TextDecoder(encSelect.value);
+      text = decoder.decode(buffer);
+    } catch (err){
+      showError('文字コードの変換に失敗しました。', String(err));
+      return;
+    }
+
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+
+    if (!parsed.meta || !parsed.meta.fields || !parsed.meta.fields.includes('注文ID')) {
+      showError(
+        'BASEの受注CSVとして認識できませんでした。',
+        '「注文ID」列が見つかりません。検出された列: ' + (parsed.meta && parsed.meta.fields ? parsed.meta.fields.join(', ') : 'なし') +
+        ' ／ 文字コードの選択（Shift-JIS / UTF-8）を切り替えてお試しください。'
+      );
+      return;
+    }
+
+    const rows = parsed.data;
+    const { items, optionLabels, orderCount } = transformRows(rows);
+
+    if (items.length === 0) {
+      showError('製作アイテムが見つかりませんでした。', 'CSVの内容（商品ID・商品名の列）をご確認ください。');
+      return;
+    }
+
+    renderResults(items, optionLabels, orderCount);
+  }
+
+  function transformRows(rows){
+    const orderGroups = new Map();
+    for (const row of rows) {
+      const oid = (row['注文ID'] || '').trim();
+      if (!oid) continue;
+      if (!orderGroups.has(oid)) orderGroups.set(oid, []);
+      orderGroups.get(oid).push(row);
+    }
+
+    const items = [];
+    const optionLabels = [];
+    const seen = new Set();
+
+    for (const [orderId, group] of orderGroups) {
+      let current = null;
+      for (const row of group) {
+        const name = (row['商品名'] || '').trim();
+        const m = name.match(OPTION_PATTERN);
+        if (m) {
+          if (!current) continue;
+          const label = m[1];
+          current.options[label] = (row['バリエーション'] || '').trim();
+          if (!seen.has(label)) { seen.add(label); optionLabels.push(label); }
+        } else if ((row['商品ID'] || '').trim()) {
+          current = {
+            base: {
+              '注文ID': orderId,
+              '注文日時': row['注文日時'] || '',
+              '氏(配送先)': row['氏(配送先)'] || '',
+              '名(配送先)': row['名(配送先)'] || '',
+              '商品名': name,
+              '数量': row['数量'] || '',
+              '発送状況': row['発送状況'] || ''
+            },
+            options: {}
+          };
+          items.push(current);
+        }
+        // それ以外（クーポン等の調整行）は無視
+      }
+    }
+
+    // 製作しやすいよう、商品名→注文日時の順に並べる
+    const collator = new Intl.Collator('ja');
+    items.sort((a, b) => {
+      const c = collator.compare(a.base['商品名'], b.base['商品名']);
+      if (c !== 0) return c;
+      return (a.base['注文日時'] || '').localeCompare(b.base['注文日時'] || '');
+    });
+
+    return { items, optionLabels, orderCount: orderGroups.size };
+  }
+
+  function renderResults(items, optionLabels, orderCount){
+    document.getElementById('statOrders').textContent = orderCount;
+    document.getElementById('statItems').textContent = items.length;
+    document.getElementById('statOptions').textContent = optionLabels.length;
+
+    const tagsEl = document.getElementById('optionTags');
+    tagsEl.innerHTML = '';
+    optionLabels.forEach(l => {
+      const span = document.createElement('span');
+      span.className = 'option-tag';
+      span.textContent = l;
+      tagsEl.appendChild(span);
+    });
+
+    const fieldnames = BASE_FIELDS.concat(optionLabels);
+    lastFieldnames = fieldnames;
+
+    const head = document.getElementById('tableHead');
+    head.innerHTML = '';
+    fieldnames.forEach(f => {
+      const th = document.createElement('th');
+      th.textContent = f;
+      head.appendChild(th);
+    });
+
+    const body = document.getElementById('tableBody');
+    body.innerHTML = '';
+    const rowsOut = [];
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      const rowObj = {};
+      BASE_FIELDS.forEach(f => {
+        const td = document.createElement('td');
+        td.className = 'base-col';
+        td.textContent = item.base[f];
+        tr.appendChild(td);
+        rowObj[f] = item.base[f];
+      });
+      optionLabels.forEach(label => {
+        const td = document.createElement('td');
+        td.className = 'opt-col';
+        const v = item.options[label] || '';
+        td.textContent = v;
+        tr.appendChild(td);
+        rowObj[label] = v;
+      });
+      body.appendChild(tr);
+      rowsOut.push(rowObj);
+    });
+
+    lastResultRows = rowsOut;
+    results.classList.add('show');
+    document.getElementById('paywall').classList.remove('show');
+    updateUsageIndicator();
+  }
+
+  function performDownload(){
+    const csv = Papa.unparse({ fields: lastFieldnames, data: lastResultRows });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = '製作リスト_' + ts + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    if (!lastResultRows || !lastFieldnames) return;
+
+    if (isUnlocked() || getUses() < FREE_USES) {
+      if (!isUnlocked()) incrementUses();
+      performDownload();
+      updateUsageIndicator();
+      document.getElementById('paywall').classList.remove('show');
+    } else {
+      document.getElementById('paywall').classList.add('show');
+      document.getElementById('paywall').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  });
+
+  document.getElementById('unlockBtn').addEventListener('click', () => {
+    const input = document.getElementById('unlockInput');
+    const msg = document.getElementById('unlockMsg');
+    const code = (input.value || '').trim();
+
+    if (code === UNLOCK_CODE) {
+      setUnlocked();
+      updateUsageIndicator();
+      msg.textContent = '解除できました。このブラウザでは今後ずっとご利用いただけます。';
+      msg.className = 'unlock-msg show ok';
+      document.getElementById('paywall').classList.remove('show');
+      // 解除直後に、止まっていたダウンロードをそのまま実行する
+      if (lastResultRows && lastFieldnames) performDownload();
+    } else {
+      msg.textContent = 'コードが正しくありません。購入時にお届けしたコードをご確認ください。';
+      msg.className = 'unlock-msg show err';
+    }
+  });
+
+  updateUsageIndicator();
+})();
+</script>
+
+</body>
+</html>
