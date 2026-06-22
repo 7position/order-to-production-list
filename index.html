@@ -3,27 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>受注CSV → 製作リスト変換ツール</title>
+<title>らくらく注文整理ツール｜BASE受注CSV→製作リスト</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=M+PLUS+1p:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
-    --paper:#F4F6F1;
+    --paper:#F3F4F3;
     --surface:#FFFFFF;
-    --ink:#1C2B3A;
-    --ink-soft:#5B6B72;
-    --line:#DCE3DA;
-    --line-strong:#C3CDC0;
-    --accent:#C97A3D;
-    --accent-deep:#A85F2A;
-    --accent-soft:#F1DEC9;
+    --ink:#24272A;
+    --ink-soft:#6B7074;
+    --line:#E4E6E4;
+    --line-strong:#C9CCC9;
+    --accent:#F5B544;
+    --accent-deep:#D99A1F;
+    --accent-soft:#FCE8B8;
+    --accent-text-on-soft:#7A5A12;
     --success:#4F7A57;
     --success-bg:#E8F0E6;
     --danger:#B3503F;
     --danger-bg:#F6E6E1;
     --radius:10px;
-    --shadow: 0 1px 2px rgba(28,43,58,0.04), 0 8px 24px rgba(28,43,58,0.05);
+    --shadow: 0 1px 2px rgba(36,39,42,0.04), 0 8px 24px rgba(36,39,42,0.05);
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -47,7 +48,7 @@
       linear-gradient(var(--line) 1px, transparent 1px),
       linear-gradient(90deg, var(--line) 1px, transparent 1px);
     background-size:48px 48px;
-    opacity:0.35;
+    opacity:0.5;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 75%);
   }
 
@@ -61,31 +62,40 @@
     margin-bottom:40px;
   }
 
+  .tool-title{
+    font-family:'M PLUS Rounded 1c', sans-serif;
+    font-weight:800;
+    font-size:clamp(32px, 6vw, 46px);
+    line-height:1.25;
+    margin:0 0 14px;
+    letter-spacing:0;
+    color:var(--ink);
+  }
+
   .eyebrow{
     display:inline-flex;
     align-items:center;
     gap:8px;
     font-family:'M PLUS 1p', sans-serif;
-    font-weight:500;
+    font-weight:700;
     font-size:12.5px;
     letter-spacing:0.04em;
-    color:var(--accent-deep);
+    color:var(--accent-text-on-soft);
     background:var(--accent-soft);
     border-radius:999px;
     padding:5px 12px;
-    margin-bottom:18px;
+    margin-bottom:20px;
   }
-  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent-deep); }
 
-  h1{
+  .tagline{
     font-family:'M PLUS Rounded 1c', sans-serif;
-    font-weight:800;
-    font-size:clamp(26px, 4vw, 36px);
-    line-height:1.4;
+    font-weight:700;
+    font-size:clamp(18px, 2.6vw, 22px);
+    color:var(--accent-deep);
     margin:0 0 14px;
-    letter-spacing:0;
+    line-height:1.5;
   }
-  h1 em{ font-style:normal; color:var(--accent-deep); }
 
   .lede{
     font-size:16px;
@@ -134,8 +144,8 @@
     transition:border-color .18s ease, background .18s ease;
   }
   .dropzone:hover, .dropzone.drag{
-    border-color:var(--accent);
-    background:#FFFDFB;
+    border-color:var(--accent-deep);
+    background:#FFFDF7;
   }
   .dropzone input[type=file]{
     position:absolute; inset:0; opacity:0; cursor:pointer;
@@ -151,7 +161,7 @@
     color:var(--ink-soft);
   }
   .dropzone .dz-icon{
-    width:34px; height:34px; color:var(--accent);
+    width:34px; height:34px; color:var(--accent-deep);
   }
 
   .controls-row{
@@ -249,7 +259,7 @@
     font-weight:500;
     font-size:11.5px;
     background:var(--accent-soft);
-    color:var(--accent-deep);
+    color:var(--accent-text-on-soft);
     border-radius:5px;
     padding:3px 8px;
   }
@@ -267,6 +277,7 @@
     font-size:17px;
     font-weight:700;
     margin:0;
+    color:var(--ink);
   }
 
   .btn{
@@ -279,8 +290,8 @@
     cursor:pointer;
     transition:background .15s ease, transform .1s ease;
   }
-  .btn-primary{ background:var(--accent); color:#fff; }
-  .btn-primary:hover{ background:var(--accent-deep); }
+  .btn-primary{ background:var(--accent); color:var(--accent-text-on-soft); }
+  .btn-primary:hover{ background:var(--accent-deep); color:#fff; }
   .btn-primary:active{ transform:scale(0.98); }
   .btn-primary:focus-visible, .dropzone:focus-within, select:focus-visible{
     outline:2px solid var(--accent-deep);
@@ -303,7 +314,7 @@
   }
   thead th{
     position:sticky; top:0;
-    background:#FBF9F5;
+    background:#FAFAF9;
     text-align:left;
     padding:10px 12px;
     border-bottom:1px solid var(--line-strong);
@@ -315,7 +326,7 @@
     border-bottom:1px solid var(--line);
     color:var(--ink-soft);
   }
-  tbody tr:hover td{ background:#FAFAF7; color:var(--ink); }
+  tbody tr:hover td{ background:#FAFAFA; color:var(--ink); }
   tbody td.base-col{ color:var(--ink); }
   tbody td.opt-col:empty::after{ content:'—'; color:var(--line-strong); }
 
@@ -346,7 +357,7 @@
     display:none;
     margin-top:16px;
     border:1px solid var(--accent-soft);
-    background:#FFFBF6;
+    background:#FFFCF5;
     border-radius:var(--radius);
     padding:22px 24px;
   }
@@ -356,6 +367,7 @@
     font-size:17px;
     font-weight:700;
     margin:0 0 8px;
+    color:var(--ink);
   }
   .paywall p{
     font-size:13.5px;
@@ -403,7 +415,7 @@
     color:var(--ink);
     border:1px solid var(--line-strong);
   }
-  .btn-secondary:hover{ background:#F2F0EA; }
+  .btn-secondary:hover{ background:#EFEFEE; }
   .unlock-msg{
     font-size:12.5px;
     margin-top:8px;
@@ -426,8 +438,8 @@
 <div class="wrap">
 
   <header class="intro">
-    <span class="eyebrow"><span class="dot"></span>BASE 受注CSV対応</span>
-    <h1>ごちゃごちゃの注文を、<em>ひとめでわかる</em>製作リストに。</h1>
+    <h1 class="tool-title">らくらく注文整理ツール</h1>
+    <p class="tagline">ごちゃごちゃの注文を、ひとめでわかる製作リストに。</p>
     <p class="lede">BASEの注文データは、お名前やカラーなどのオプションがそれぞれ別の行に分かれて出てきます。このツールがそれを自動でひとつにまとめて、そのまま製作に使えるリストにします。むずかしい設定は必要ありません。</p>
     <div class="privacy-note">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -436,34 +448,31 @@
   </header>
 
   <!-- signature diagram: rows merging into one row with columns -->
-  <svg class="diagram" viewBox="0 0 420 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <g stroke="#C3CDC0" stroke-width="1.4">
+  <svg class="diagram" viewBox="0 0 420 90" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g stroke="#C9CCC9" stroke-width="1.4">
       <rect x="0" y="6"  width="118" height="16" rx="3" fill="#FFFFFF"/>
       <rect x="0" y="30" width="118" height="16" rx="3" fill="#FFFFFF"/>
       <rect x="0" y="54" width="118" height="16" rx="3" fill="#FFFFFF"/>
-      <rect x="0" y="78" width="118" height="16" rx="3" fill="#FFFFFF"/>
     </g>
-    <g fill="#5B6B72" font-family="'M PLUS 1p', sans-serif" font-size="9">
+    <g fill="#6B7074" font-family="'M PLUS 1p', sans-serif" font-size="9">
       <text x="8" y="17">商品名</text>
       <text x="8" y="41">商品オプション「文字入力」</text>
       <text x="8" y="65">商品オプション「カラー」</text>
-      <text x="8" y="89">商品オプション「蓄光」</text>
     </g>
-    <g stroke="#C97A3D" stroke-width="1.4" fill="none" stroke-linecap="round">
-      <path d="M120 14 C 170 14, 170 50, 230 50"/>
-      <path d="M120 38 C 170 38, 170 50, 230 50"/>
-      <path d="M120 62 C 170 62, 170 50, 230 50"/>
-      <path d="M120 86 C 170 86, 170 50, 230 50"/>
+    <g stroke="#D99A1F" stroke-width="1.4" fill="none" stroke-linecap="round">
+      <path d="M120 14 C 170 14, 170 38, 230 38"/>
+      <path d="M120 38 C 170 38, 170 38, 230 38"/>
+      <path d="M120 62 C 170 62, 170 38, 230 38"/>
     </g>
     <g>
-      <rect x="232" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
-      <rect x="294" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
-      <rect x="356" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
+      <rect x="232" y="26" width="58" height="24" rx="3" fill="#FCE8B8" stroke="#D99A1F" stroke-width="1.2"/>
+      <rect x="294" y="26" width="58" height="24" rx="3" fill="#FCE8B8" stroke="#D99A1F" stroke-width="1.2"/>
+      <rect x="356" y="26" width="58" height="24" rx="3" fill="#FCE8B8" stroke="#D99A1F" stroke-width="1.2"/>
     </g>
-    <g fill="#A85F2A" font-family="'M PLUS 1p', sans-serif" font-size="8.5" text-anchor="middle">
-      <text x="261" y="53">文字入力</text>
-      <text x="323" y="53">カラー</text>
-      <text x="385" y="53">蓄光</text>
+    <g fill="#7A5A12" font-family="'M PLUS 1p', sans-serif" font-size="8.5" text-anchor="middle">
+      <text x="261" y="41">商品名</text>
+      <text x="323" y="41">文字</text>
+      <text x="385" y="41">カラー</text>
     </g>
   </svg>
 
@@ -525,7 +534,7 @@
       <h3>無料でお試しいただける分はここまでです</h3>
       <p>初回のダウンロードは無料です。2回目以降は、少しだけ利用料をいただいています（表の確認は、このあとも何度でも無料でできます）。</p>
       <div class="paywall-actions">
-        <a class="btn btn-stripe" id="stripeLink" href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK" target="_blank" rel="noopener">
+        <a class="btn btn-stripe" id="stripeLink" href="https://buy.stripe.com/14AeVcdhF4mF2H7fTxeIw00" target="_blank" rel="noopener">
           Stripeで購入する（¥200）
         </a>
       </div>
@@ -549,7 +558,7 @@
 (function(){
   // デバッグ・問い合わせ対応用のバージョン表示。
   // 改修するたびにここを更新すると、利用者がどのバージョンを見ているか確認できます。
-  const VERSION = 'v1.2.0 (2026-06-22)';
+  const VERSION = 'v1.3.0 (2026-06-22)';
 
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
@@ -567,11 +576,8 @@
   const OPTION_PATTERN = /^商品オプション「(.+)」$/;
 
   // ===== 課金ゲートの設定 =====
-  // 無料で許可するダウンロード回数（このブラウザ・このサイト単位）
   const FREE_USES = 1;
-  // Stripeでの決済完了後にお客様へお伝えする解除コード。
-  // 運用時はご自身で決めた文字列に変更してください（Stripeの決済完了メッセージ等に記載）。
-  const UNLOCK_CODE = 'REPLACE_WITH_YOUR_CODE';
+  const UNLOCK_CODE = 'rakuraku0001';
   const LS_USES_KEY = 'oplUses_v1';
   const LS_UNLOCK_KEY = 'oplUnlocked_v1';
 
@@ -709,11 +715,9 @@
           };
           items.push(current);
         }
-        // それ以外（クーポン等の調整行）は無視
       }
     }
 
-    // 製作しやすいよう、商品名→注文日時の順に並べる
     const collator = new Intl.Collator('ja');
     items.sort((a, b) => {
       const c = collator.compare(a.base['商品名'], b.base['商品名']);
@@ -819,7 +823,6 @@
       msg.textContent = '解除できました。このブラウザでは今後ずっとご利用いただけます。';
       msg.className = 'unlock-msg show ok';
       document.getElementById('paywall').classList.remove('show');
-      // 解除直後に、止まっていたダウンロードをそのまま実行する
       if (lastResultRows && lastFieldnames) performDownload();
     } else {
       msg.textContent = 'コードが正しくありません。購入時にお届けしたコードをご確認ください。';
@@ -828,7 +831,7 @@
   });
 
   document.getElementById('versionTag').textContent = VERSION;
-  console.log('[order-to-production-list]', VERSION);
+  console.log('[らくらく注文整理ツール]', VERSION);
 
   updateUsageIndicator();
 })();
