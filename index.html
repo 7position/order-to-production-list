@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>受注CSV → 製作リスト変換ツール</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=M+PLUS+1p:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
@@ -36,8 +36,8 @@
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    line-height:1.6;
+    font-family:'M PLUS 1p', sans-serif;
+    line-height:1.7;
     -webkit-font-smoothing:antialiased;
   }
 
@@ -65,9 +65,10 @@
     display:inline-flex;
     align-items:center;
     gap:8px;
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'M PLUS 1p', sans-serif;
+    font-weight:500;
     font-size:12.5px;
-    letter-spacing:0.06em;
+    letter-spacing:0.04em;
     color:var(--accent-deep);
     background:var(--accent-soft);
     border-radius:999px;
@@ -77,14 +78,14 @@
   .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); }
 
   h1{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:clamp(28px, 4vw, 38px);
-    line-height:1.25;
+    font-family:'M PLUS Rounded 1c', sans-serif;
+    font-weight:800;
+    font-size:clamp(26px, 4vw, 36px);
+    line-height:1.4;
     margin:0 0 14px;
-    letter-spacing:-0.01em;
+    letter-spacing:0;
   }
-  h1 em{ font-style:italic; color:var(--accent-deep); font-weight:500; }
+  h1 em{ font-style:normal; color:var(--accent-deep); }
 
   .lede{
     font-size:16px;
@@ -107,7 +108,7 @@
   .privacy-note svg{ flex-shrink:0; margin-top:1px; }
 
   .scope-note{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'M PLUS 1p', sans-serif;
     font-size:12px;
     color:var(--ink-soft);
     margin-top:14px;
@@ -140,9 +141,9 @@
     position:absolute; inset:0; opacity:0; cursor:pointer;
   }
   .dropzone .dz-title{
-    font-family:'Fraunces', serif;
-    font-weight:600;
-    font-size:19px;
+    font-family:'M PLUS Rounded 1c', sans-serif;
+    font-weight:700;
+    font-size:18px;
     margin:14px 0 6px;
   }
   .dropzone .dz-sub{
@@ -170,7 +171,7 @@
     color:var(--ink-soft);
   }
   .enc-toggle select{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'M PLUS 1p', sans-serif;
     font-size:12.5px;
     border:1px solid var(--line-strong);
     border-radius:6px;
@@ -180,7 +181,7 @@
   }
 
   .filename-chip{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'M PLUS 1p', sans-serif;
     font-size:12.5px;
     color:var(--ink-soft);
   }
@@ -195,7 +196,7 @@
   }
   .banner.show{ display:block; }
   .banner.error{ background:var(--danger-bg); color:var(--danger); }
-  .banner.error .err-detail{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; opacity:0.85; margin-top:4px; }
+  .banner.error .err-detail{ font-family:'M PLUS 1p', sans-serif; font-size:12.5px; opacity:0.85; margin-top:4px; }
 
   /* --- results --- */
   .results{
@@ -225,8 +226,8 @@
     min-width:130px;
   }
   .stat-card .num{
-    font-family:'Fraunces', serif;
-    font-weight:600;
+    font-family:'M PLUS Rounded 1c', sans-serif;
+    font-weight:800;
     font-size:26px;
     color:var(--accent-deep);
     line-height:1;
@@ -244,7 +245,8 @@
     margin-bottom:22px;
   }
   .option-tag{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'M PLUS 1p', sans-serif;
+    font-weight:500;
     font-size:11.5px;
     background:var(--accent-soft);
     color:var(--accent-deep);
@@ -261,15 +263,15 @@
     gap:10px;
   }
   .table-toolbar h2{
-    font-family:'Fraunces', serif;
+    font-family:'M PLUS Rounded 1c', sans-serif;
     font-size:17px;
-    font-weight:600;
+    font-weight:700;
     margin:0;
   }
 
   .btn{
-    font-family:'Inter', sans-serif;
-    font-weight:600;
+    font-family:'M PLUS 1p', sans-serif;
+    font-weight:700;
     font-size:13.5px;
     border:none;
     border-radius:7px;
@@ -295,8 +297,8 @@
   table{
     border-collapse:collapse;
     width:100%;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12.5px;
+    font-family:'M PLUS 1p', sans-serif;
+    font-size:13px;
     white-space:nowrap;
   }
   thead th{
@@ -306,7 +308,7 @@
     padding:10px 12px;
     border-bottom:1px solid var(--line-strong);
     color:var(--ink);
-    font-weight:600;
+    font-weight:700;
   }
   tbody td{
     padding:8px 12px;
@@ -324,11 +326,18 @@
     border-top:1px solid var(--line);
     padding-top:18px;
   }
+  .version-tag{
+    font-family:'M PLUS 1p', sans-serif;
+    font-size:11px;
+    color:var(--line-strong);
+    margin-top:10px;
+  }
 
   /* --- usage / paywall --- */
   .usage-indicator{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
+    font-family:'M PLUS 1p', sans-serif;
+    font-weight:500;
+    font-size:12.5px;
     color:var(--ink-soft);
   }
   .usage-indicator.unlocked{ color:var(--success); }
@@ -343,9 +352,9 @@
   }
   .paywall.show{ display:block; animation: fadeUp .3s ease both; }
   .paywall h3{
-    font-family:'Fraunces', serif;
+    font-family:'M PLUS Rounded 1c', sans-serif;
     font-size:17px;
-    font-weight:600;
+    font-weight:700;
     margin:0 0 8px;
   }
   .paywall p{
@@ -380,7 +389,7 @@
     align-items:center;
   }
   .unlock-row input{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'M PLUS 1p', sans-serif;
     font-size:13px;
     border:1px solid var(--line-strong);
     border-radius:6px;
@@ -418,8 +427,8 @@
 
   <header class="intro">
     <span class="eyebrow"><span class="dot"></span>BASE 受注CSV対応</span>
-    <h1>注文を、<em>つくる順番</em>に並べ直す。</h1>
-    <p class="lede">BASEの受注CSVは1注文が複数行（商品＋オプション行）に分かれています。これを1注文アイテム1行にまとめ、オプションを列として並べ直し、そのまま製作リストとして使える形にします。</p>
+    <h1>ごちゃごちゃの注文を、<em>ひとめでわかる</em>製作リストに。</h1>
+    <p class="lede">BASEの注文データは、お名前やカラーなどのオプションがそれぞれ別の行に分かれて出てきます。このツールがそれを自動でひとつにまとめて、そのまま製作に使えるリストにします。むずかしい設定は必要ありません。</p>
     <div class="privacy-note">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>アップロードしたCSVはこのブラウザの中だけで処理されます。サーバーには送信されません。</span>
@@ -434,7 +443,7 @@
       <rect x="0" y="54" width="118" height="16" rx="3" fill="#FFFFFF"/>
       <rect x="0" y="78" width="118" height="16" rx="3" fill="#FFFFFF"/>
     </g>
-    <g fill="#5B6B72" font-family="IBM Plex Mono, monospace" font-size="9">
+    <g fill="#5B6B72" font-family="'M PLUS 1p', sans-serif" font-size="9">
       <text x="8" y="17">商品名</text>
       <text x="8" y="41">商品オプション「文字入力」</text>
       <text x="8" y="65">商品オプション「カラー」</text>
@@ -451,7 +460,7 @@
       <rect x="294" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
       <rect x="356" y="38" width="58" height="24" rx="3" fill="#F1DEC9" stroke="#C97A3D" stroke-width="1.2"/>
     </g>
-    <g fill="#A85F2A" font-family="IBM Plex Mono, monospace" font-size="8.5" text-anchor="middle">
+    <g fill="#A85F2A" font-family="'M PLUS 1p', sans-serif" font-size="8.5" text-anchor="middle">
       <text x="261" y="53">文字入力</text>
       <text x="323" y="53">カラー</text>
       <text x="385" y="53">蓄光</text>
@@ -461,8 +470,8 @@
   <div class="dropzone" id="dropzone" tabindex="0">
     <input type="file" id="fileInput" accept=".csv" aria-label="BASE受注CSVをアップロード">
     <svg class="dz-icon" viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    <div class="dz-title">受注CSVをドロップ、またはクリックして選択</div>
-    <div class="dz-sub" id="dzSub">BASEの管理画面からダウンロードした受注CSV（.csv）に対応しています</div>
+    <div class="dz-title">受注CSVをここにドラッグ、またはクリックして選んでください</div>
+    <div class="dz-sub" id="dzSub">BASEの管理画面からダウンロードしたCSVファイルを、そのまま使えます</div>
   </div>
 
   <div class="controls-row">
@@ -513,8 +522,8 @@
     </div>
 
     <div class="paywall" id="paywall">
-      <h3>無料分はここまでです</h3>
-      <p>初回の変換は無料でお試しいただけます。2回目以降のダウンロードには、少額の利用料をいただいています（プレビューはこのあとも何度でも無料でご覧いただけます）。</p>
+      <h3>無料でお試しいただける分はここまでです</h3>
+      <p>初回のダウンロードは無料です。2回目以降は、少しだけ利用料をいただいています（表の確認は、このあとも何度でも無料でできます）。</p>
       <div class="paywall-actions">
         <a class="btn btn-stripe" id="stripeLink" href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK" target="_blank" rel="noopener">
           Stripeで購入する（¥200）
@@ -531,12 +540,17 @@
   <footer>
     対応プラットフォーム: BASE（β）。STORES・minne等は今後対応予定です。<br>
     列名はBASEが出力したオプション名をそのまま使用しています（独自の項目名に変更したい場合は、ダウンロード後のCSVを編集してください）。
+    <div class="version-tag" id="versionTag"></div>
   </footer>
 
 </div>
 
 <script>
 (function(){
+  // デバッグ・問い合わせ対応用のバージョン表示。
+  // 改修するたびにここを更新すると、利用者がどのバージョンを見ているか確認できます。
+  const VERSION = 'v1.2.0 (2026-06-22)';
+
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const encSelect = document.getElementById('encSelect');
@@ -812,6 +826,9 @@
       msg.className = 'unlock-msg show err';
     }
   });
+
+  document.getElementById('versionTag').textContent = VERSION;
+  console.log('[order-to-production-list]', VERSION);
 
   updateUsageIndicator();
 })();
